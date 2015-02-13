@@ -1,9 +1,10 @@
---- src/core/ngx_slab.c	2013-05-06 07:27:10.000000000 -0300
-+++ src/core/ngx_slab.c	2013-07-31 00:21:08.043034442 -0300
-@@ -615,6 +615,26 @@ fail:
- 
- 
- static ngx_slab_page_t *
+--- src/core/ngx_slab.c 2015-02-13 03:08:05.413847661 +0000
++++ src/core/ngx_slab.c 2015-02-13 03:11:11.712888508 +0000
+@@ -617,6 +617,24 @@
+     return;
+ }
+
++static ngx_slab_page_t *
 +ngx_slab_merge_with_neighbour(ngx_slab_pool_t *pool, ngx_slab_page_t *page)
 +{
 +    ngx_slab_page_t *neighbour = &page[page->slab];
@@ -21,16 +22,13 @@
 +    }
 +    return NULL;
 +}
-+
-+
-+static ngx_slab_page_t *
+
+ static ngx_slab_page_t *
  ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
- {
-     ngx_slab_page_t  *page, *p;
-@@ -657,6 +677,19 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *po
+@@ -663,6 +681,19 @@
          }
      }
- 
+
 +    ngx_flag_t retry = 0;
 +    for (page = pool->free.next; page != &pool->free;) {
 +        if (ngx_slab_merge_with_neighbour(pool, page)) {
@@ -44,15 +42,13 @@
 +        return ngx_slab_alloc_pages(pool, pages);
 +    }
 +
-     ngx_slab_error(pool, NGX_LOG_CRIT, "ngx_slab_alloc() failed: no memory");
- 
-     return NULL;
-@@ -687,6 +720,8 @@ ngx_slab_free_pages(ngx_slab_pool_t *poo
+     if (pool->log_nomem) {
+         ngx_slab_error(pool, NGX_LOG_CRIT,
+                        "ngx_slab_alloc() failed: no memory");
+@@ -750,6 +781,8 @@
      page->next->prev = (uintptr_t) page;
- 
+
      pool->free.next = page;
 +
 +    ngx_slab_merge_with_neighbour(pool, page);
  }
- 
- 
